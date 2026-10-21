@@ -1,5 +1,13 @@
 {
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "**"
+    }
+  },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" }
+    { "source": "/api/limitless", "destination": "/api/limitless.js" },
+    { "source": "/api/japan", "destination": "/api/japan.js" },
+    { "source": "/api/taiwan", "destination": "/api/taiwan.js" },
+    { "source": "/api/pokecabook", "destination": "/api/pokecabook.js" }
   ]
 }
