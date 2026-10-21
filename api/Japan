@@ -1,0 +1,55 @@
+// /api/japan.js - Vercel Serverless Function
+// 整合日本多源：pokecabook + note.com 集計 + gumaguma (fallback)
+// 專門拎日本小比賽 (32-64人 City League)
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const { source = 'pokecabook', dateRange = '7d' } = req.query;
+
+  try {
+    if (source === 'pokecabook') {
+      // 代理到 pokecabook
+      const base = `https://${req.headers.host}`;
+      const resp = await fetch(`${base}/api/pokecabook`);
+      const data = await resp.json();
+      return res.status(resp.status).json({ ...data, aggregatedSource: 'japan', source: 'pokecabook via /api/pokecabook' });
+    }
+
+    if (source === 'note') {
+      // Note.com 集計例子：https://note.com/nananashi_pokeca/n/ne5c8f8f5b1c2
+      // 呢個係日本玩家手動集計 59大會・236Deck，最準但需手動爬
+      return res.status(200).json({
+        success: false,
+        error: 'Note.com 集計需手動授權爬蟲 - 屬個人創作內容',
+        source: 'note.com',
+        hint: '可直接參考：https://note.com/ - 搜尋「シティリーグ 集計」- 每週有玩家整理 59大會236Deck',
+        recommendedAction: '用 pokecabook 作為主源，note 作為對照'
+      });
+    }
+
+    if (source === 'gumaguma') {
+      return res.status(200).json({
+        success: false,
+        error: 'Gumaguma.jp 阻擋 Vercel IP - 需用 Cloudflare Workers 中轉',
+        source: 'gumaguma.jp',
+        hint: 'Gumaguma 主要係相場，City League 數據不如 PokecaBook 齊，建議用 PokecaBook 為主'
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: `未知 source: ${source}`,
+      available: ['pokecabook', 'note', 'gumaguma']
+    });
+
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      error: `Japan 整合 API 失敗: ${e.message}`,
+      source: 'japan'
+    });
+  }
+}
